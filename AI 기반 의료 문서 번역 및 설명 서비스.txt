@@ -42,6 +42,7 @@ User Story: "보호자 이지은으로서, 나는 아이의 처방전 사진을 
 추출된 의학 용어를 일상 용어로 번역 및 설명 (예: 'AST/ALT 수치 상승' -> '간세포가 손상되었을 때 높아지는 수치로, 간 기능 저하가 의심됩니다.')
 
 핵심 기능 2: 용어별 상세 설명 및 관련 정보 제공
+AI 활용(AI-Hub) : https://www.aihub.or.kr/aihubdata/data/view.do?pageIndex=1&currMenu=115&topMenu=100&srchOptnCnd=OPTNCND001&searchKeyword=&srchDetailCnd=DETAILCND001&srchOrder=ORDER001&srchPagePer=20&srchDataRealmCode=REALM006&aihubDataSe=data&dataSetSn=71874
 
 User Story: "만성질환자 최철수로서, 나는 번역된 결과에서 특정 질병이나 약품 이름을 클릭하면 더 자세한 정의와 주의사항을 확인하고 싶다. 그래야 내 병을 더 잘 관리할 수 있다."
 
