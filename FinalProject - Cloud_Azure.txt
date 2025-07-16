@@ -1,0 +1,150 @@
+## 1. Azure 서비스
+
+- **Azure Kubernetes Service (AKS):** MSA 컨테이너 오케스트레이션에 가장 적합한 서비스입니다. 각 마이크로서비스를 Docker 컨테이너로 패키징하고 AKS 클러스터에 배포하여 확장, 관리 및 모니터링을 자동화할 수 있습니다.
+    - **강점:** 컨테이너화 된 애플리케이션 배포, 확장, 관리 자동화, 서비스 디스커버리, 로드 밸런싱.
+    - **적용:** `gateway-service`, `user-service`, `assistant-service`, `routine-service` 등 모든 컨테이너 기반 서비스 배포.
+    
+    → 사용예정(MSA 적용)
+    
+- **Azure Container Apps:** 서버리스 컨테이너 서비스로, AKS보다 더 간편하게 컨테이너를 배포하고 관리할 수 있습니다. 규모가 크지 않거나 복잡한 오케스트레이션이 필요 없는 서비스에 적합할 수 있습니다.
+    - **강점:** 서버리스, 비용 효율적, 간단한 컨테이너 배포.
+    - **적용 (선택적):** 초기 MVP 단계에서 빠르게 배포하고 싶거나, 특정 마이크로서비스의 복잡도가 낮은 경우 고려.
+    
+- **Azure App Service:** 웹 애플리케이션을 호스팅하는 PaaS(Platform as a Service) 서비스입니다. 백엔드 API 서비스나 웹 프론트엔드 배포에 활용될 수 있습니다.
+    - **강점:** 빠른 배포, 자동 스케일링, CI/CD 통합 용이, 다양한 언어 지원.
+    - **적용:** `frontend` 애플리케이션 배포, 혹은 특정 백엔드 서비스가 컨테이너화가 필수적이지 않은 경우.
+    
+- **Azure Database for MySQL/PostgreSQL/MongoDB Atlas on Azure:** 데이터베이스 서비스를 관리형으로 제공하여 데이터베이스 인프라 구축 및 관리에 대한 부담을 줄여줍니다.
+    - **강점:** 자동 백업, 확장성, 고가용성, 보안.
+    - **적용:** `MySQL` 또는 `PostgreSQL`은 관계형 데이터 저장에, `MongoDB`는 문서 기반 데이터 저장에 활용.
+    
+- **Azure Cache for Redis:** 인메모리 데이터 스토어로, 세션 관리나 캐싱에 활용하여 애플리케이션 성능을 향상시킬 수 있습니다.
+    - **강점:** 빠른 데이터 액세스, 세션 관리, 데이터 캐싱.
+    - **적용:** `redis-service`의 Azure 관리형 서비스 대체.
+    
+- **Azure Event Hubs / Azure Service Bus:** 메시지 큐 역할을 하는 관리형 서비스로, 비동기 통신 및 이벤트 처리에 사용됩니다.
+    - **강점:** 높은 처리량, 안정적인 메시지 전달, 이벤트 스트리밍.
+    - **적용:** `kafka-service`를 대체하거나 함께 사용하여 비동기 이벤트 처리.
+    
+- **Azure OpenAI Service:** GPT-4o-Mini와 같은 OpenAI 모델을 Azure 인프라에서 안전하고 확장성 있게 사용할 수 있도록 지원합니다.
+    - **강점:** 기업 보안 및 규정 준수, 관리형 API, 트래픽 폭증에도 안정적.
+    - **적용:** `assistant-service` 및 `emotional care chatBot`의 AI 모델 연동.
+    
+- **Azure Cognitive Services (Speech-to-Text, Text-to-Speech):** 음성 인식 및 합성 기능을 제공하여 음성 기반 인터페이스를 구현하는 데 필수적입니다.
+    - **강점:** 고품질 음성 처리, 다양한 언어 지원.
+    - **적용:** 음성 기반 커뮤니티, 인지훈련 게임, AI 에이전트의 음성 입출력 기능.
+    
+- **Azure Monitor & Azure Application Insights:** 서비스의 성능 모니터링, 로그 수집, 문제 진단에 활용됩니다.
+    - **강점:** 실시간 모니터링, 경고 설정, 트러블슈팅.
+    - **적용:** `logging-service`의 역할 강화 및 전반적인 서비스 상태 모니터링.
+
+### 1.1 DataBase에 관하여
+
+- **Azure SQL Database (Always Free)**
+• 매월 100,000 vCore·초(serverless)와 최대 32 GB 스토리지 10개 DB까지 무료로 제공.
+• Spring Data JPA, Hibernate와 완벽 연동.
+• 서버리스 자동 일시 중지 기능으로 비용 최소화.
+- **Azure Database for PostgreSQL**
+• Single Server, Flexible Server, Hyperscale(Citus) 옵션 제공.
+• 비즈니스 로직을 DB 레벨에서 처리하는 복잡한 쿼리·스토어드 프로시저에 강점.
+• 학생 크레딧으로는 소규모 vCore·스토리지로만 운영 권장.
+- **Azure Database for MySQL**
+• MySQL 호환성 필요 시 선택.
+• Flexible Server로 예약 인스턴스 활용하면 장기 비용 절감 가능.
+• PostgreSQL 대비 커뮤니티 지원이 많은 편.
+
+## 2. 배포 흐름
+
+- **코드 커밋 (Code Commit):** 개발자가 코드 변경 사항을 GitHub 또는 Azure Repos에 푸시합니다.
+
+- **지속적 통합 (CI):**
+    - **빌드 (Build):** 코드를 컴파일하고 Docker 이미지로 빌드합니다.
+    - **테스트 (Test):** 단위 테스트, 통합 테스트 등을 자동 실행하여 코드 품질을 검증합니다.
+    - **이미지 푸시 (Image Push):** 빌드된 Docker 이미지를 Azure Container Registry (ACR)에 푸시합니다.
+    
+- **지속적 배포 (CD):**
+    - **배포 (Deploy):** ACR에 저장된 최신 Docker 이미지를 AKS 클러스터에 배포합니다.
+    - **환경 설정 (Environment Configuration):** 각 서비스에 필요한 환경 변수, 시크릿 등을 Azure Key Vault 등에서 안전하게 주입합니다.
+    - **모니터링 (Monitoring):** 배포된 서비스의 성능 및 안정성을 Azure Monitor를 통해 지속적으로 모니터링합니다
+
+## **3. 각각의 프로젝트에 특화**
+
+### 3.1. 경계선 지능인 지원 서비스
+
+- **Azure OpenAI Service:** 기억 보조, 표현 보조, 정서 케어 챗봇의 핵심 AI 기능을 제공합니다. 특히 `GPT-4o-Mini` 모델을 활용하여 빠르고 비용 효율적인 응답을 구현할 수 있습니다.
+- **Azure Cognitive Services (STT/TTS):** UI/UX 접근성 강화를 위해 음성 입출력 기능을 구현할 때 필수적입니다. 경계선 지능인의 텍스트 입력 어려움을 보완할 수 있습니다.
+- **Azure Cosmos DB (MongoDB API):** 개인화된 루틴, 체크리스트, 대화 기록 등을 유연하게 저장하고 관리하는 데 적합할 수 있습니다. NoSQL 데이터베이스는 스키마 변경에 유연하여 빠른 개발에 도움이 됩니다.
+- **Azure Application Insights:** 사용자 행동 패턴 및 애플리케이션 성능을 분석하여 '단순화, 시각화, 반복화, 정서적 안정감 제공'이라는 설계 이유에 부합하는지 검증하고 지속적으로 개선하는 데 활용합니다.
+
+### 3.2. 실버 세대 지원 서비스 ("기억온")
+
+- **Azure Cognitive Services (STT/TTS):** '기억온'의 핵심 차별점인 음성 기반 인터페이스 구현에 절대적으로 필요합니다. 고령 사용자들이 음성만으로 쉽게 서비스를 이용할 수 있도록 지원합니다.
+- **Azure OpenAI Service:** AI 조기진단, 인지훈련 게임, AI 말벗 챗봇, AI 회상 치료 보조 서비스 등 AI 기반 기능에 활용됩니다.
+- **Azure Stream Analytics & Event Hubs:** '활동 감지 및 SOS' 기능 구현 시, 사용자의 비활동 이상 징후를 실시간으로 감지하고 복지사/보호자에게 알림을 전송하는 데 활용될 수 있습니다.
+- **Azure Data Lake Storage & Azure Synapse Analytics:** 장기적으로 사용자 인지·행동 데이터를 분석하여 맞춤형 건강 관리 및 연구 협력을 위한 기반을 마련할 수 있습니다.
+
+## 4. 협업
+
+- **Azure 구독 및 리소스 그룹 설정:** 팀원들이 각자의 환경에서 Azure 리소스에 접근하고 관리할 수 있도록 권한 설정.
+- **핵심 Azure 서비스 개념 설명:** AKS, Azure App Service, Azure Database 등 주요 서비스의 역할과 활용법을 이해.
+- **Docker 및 컨테이너 개념:** MSA 배포의 기본이 되는 Docker 컨테이너의 생성 및 관리 방법을 학습.
+- **CI/CD 파이프라인 이해:** 코드 변경부터 배포까지의 자동화된 과정을 명확히 이해
+- **모니터링 및 로깅:** 배포 후 서비스의 상태를 확인하고 문제 발생 시 진단하는 방법을 공유
+
+## ⚙️서비스 핵심 구성 및 Azure 기술 스택
+
+| 구분 | 서비스/기능 | Azure 서비스 | 비고 |
+| --- | --- | --- | --- |
+| **프론트엔드** | 웹 앱 (Capacitor 기반) | **Azure Static Web Apps** 또는 **Azure App Service (Linux)** | **Azure Static Web Apps**: React 기반의 정적 웹 앱에 최적화되어 있으며, 빌드 및 배포 자동화, CDN 통합, SSL 지원 등 기본 기능이 무료 또는 저렴한 비용으로 제공됩니다. Capacitor를 사용하면 웹 앱을 모바일 앱처럼 패키징할 수 있어 크로스 플랫폼 지원에 유리합니다. 
+
+**Azure App Service (Linux)**: 보다 유연한 웹 앱 호스팅이 필요할 경우 사용. 웹 소켓 지원 및 백엔드 API와의 연동이 용이합니다. |
+| **백엔드 API** | 회원 관리, 커뮤니티, 기능 로직 등 | **Azure App Service (Linux)** 또는 **Azure Container Apps** | **Azure App Service (Linux)**: Spring Boot 기반의 백엔드 API를 배포하기 위한 가장 효율적인 PaaS 서비스입니다. 자동 스케일링, CI/CD 연동, 모니터링 기능 등을 기본 제공합니다. 비용 효율적인 Basic 또는 Standard 플랜부터 시작할 수 있습니다.
+
+**Azure Container Apps**: 마이크로서비스 아키텍처에 좀 더 특화된 서버리스 컨테이너 서비스. 사용량 기반 과금으로 초기 비용 부담이 적고, 트래픽이 많지 않을 때는 매우 효율적입니다. Spring Boot 앱을 Docker 컨테이너로 빌드하여 배포합니다. |
+| **데이터베이스** | MySQL 또는 PostgreSQL | **Azure Database for MySQL/PostgreSQL (Flexible Server)** | 관리형 RDBMS 서비스로, 직접 DB를 운영하는 것에 비해 관리 및 유지보수 부담이 대폭 줄어듭니다. 
+**Flexible Server** 옵션은 비용 효율적인 소규모 워크로드에 적합하며, 필요에 따라 유연하게 확장할 수 있습니다. 개발/테스트용으로는 Burst-able 계층을 사용하면 비용을 더욱 절감할 수 있습니다. |
+| **AI/ML 모델** | AI 에이전트, 챗봇, 조기진단 | **Azure OpenAI Service**, **Azure Cognitive Services** | **Azure OpenAI Service**: GPT API (GPT-4o-Mini)를 활용하여 AI 말벗, 행동 추천, 회상 치료 보조 등의 핵심 AI 기능을 구현합니다. Azure 환경 내에서 안전하고 확장성 있게 사용할 수 있으며, 사용량 기반 과금으로 초기 비용 부담을 줄일 수 있습니다. 
+
+**Azure Cognitive Services**: AI 조기진단을 위한 간단한 분류 모델(예: Custom Vision)이나, 감정 분석(Text Analytics) 등 특정 AI 기능에 활용될 수 있습니다. |
+| **음성 처리** | STT(음성인식), TTS(음성합성) | **Azure Cognitive Services (Speech Service)** | STT와 TTS는 '기억온'의 핵심 차별점이므로, 고품질의 안정적인 서비스가 필수적입니다. Azure Speech Service는 뛰어난 성능과 다양한 언어 지원, 그리고 사용량 기반 요금제를 제공하여 효율적입니다. |
+| **실시간 통신** | 커뮤니티 채팅, 알림 | **Azure Web PubSub Service** 또는 **Azure SignalR Service** | **Azure Web PubSub Service**: 실시간 양방향 통신이 필요한 채팅 기능 등에 적합합니다. 서버리스 기반으로 사용량에 따라 비용이 청구되어 효율적입니다. 
+
+**Azure SignalR Service**: ASP.NET Core SignalR과 호환성이 좋으며, 실시간 푸시 알림 및 채팅 등에 사용될 수 있습니다. 소규모 프로젝트에서는 직접 WebSocket 구현도 가능하지만, 관리형 서비스가 안정성과 확장성 면에서 유리합니다. |
+| **메시지 큐** | 비동기 이벤트, 활동 감지 | **Azure Service Bus** 또는 **Azure Event Hubs** | **Azure Service Bus**: 메시지 전달 보장이 중요한 경우 (예: 활동 감지 후 SOS 알림)에 적합합니다. 큐/토픽 기반의 안정적인 메시징을 제공합니다. 
+**Azure Event Hubs**: 대량의 스트리밍 데이터를 처리하는 데 특화되어 있어, 사용자의 활동 로그 등을 수집하고 분석하는 데 활용될 수 있습니다. 초기에는 사용량 기반의 저렴한 플랜으로 시작할 수 있습니다. |
+| **캐싱/세션** | 사용자 세션, 빠른 데이터 조회 | **Azure Cache for Redis** | 백엔드 API의 성능을 향상시키고 사용자 세션 관리를 효율적으로 할 수 있습니다. 개발/테스트용으로는 무료 계층도 제공됩니다. |
+| **파일 저장소** | 사진, 이미지, 음성 파일 | **Azure Blob Storage** | AI 회상 치료 보조 서비스에서 필요한 과거 사진이나 사용자 업로드 이미지, 음성 파일 등을 저장하는 데 사용합니다. 저렴하고 확장성이 뛰어난 객체 저장소 서비스입니다. |
+| **모니터링/로깅** | 서비스 성능, 장애 진단 | **Azure Monitor** / **Azure Application Insights** | 서비스의 전반적인 상태를 모니터링하고 로그를 수집하여 문제 진단 및 성능 최적화에 활용합니다. Application Insights는 웹 애플리케이션에 대한 상세한 성능 모니터링을 제공합니다. 초기에는 Free 계층이나 낮은 사용량으로 비용 부담을 최소화할 수 있습니다. |
+| **배포/CI/CD** | 개발 환경 구축, 자동 배포 | **Azure DevOps** 또는 **GitHub Actions** | **Azure DevOps**: 코드 저장소, CI/CD 파이프라인, 테스트 계획 등 통합적인 개발 환경을 제공합니다. 
+
+**GitHub Actions**: GitHub 저장소와 연동하여 코드 푸시 시 자동으로 빌드, 테스트, 배포를 수행할 수 있습니다. 퍼블릭 리포지토리의 경우 무료 사용량이 제공되어 비용 효율적입니다. |
+| **보안** | 인증, 권한 관리, API Key | **Azure Active Directory**, **Azure Key Vault** | **Azure Active Directory**: 사용자 인증 및 권한 관리에 활용합니다. 
+**Azure Key Vault**: API 키, 비밀번호 등 민감 정보를 안전하게 저장하고 관리하는 데 사용합니다. 서비스 코드에 하드코딩하는 것을 방지하여 보안을 강화합니다. |
+
+## 💵비용 효율성
+
+- **PaaS 서비스 우선 활용:** 인프라 관리 부담을 줄여 인건비와 운영 비용을 절감합니다. Azure App Service, Azure Database, Azure Cognitive Services 등은 관리형 서비스로 제공되어 편리합니다.
+- **서버리스(Serverless) 활용:** Azure Container Apps, Azure Web PubSub Service 등 서버리스 서비스는 실제 사용량에 따라 과금되므로, 초기 트래픽이 많지 않을 때 매우 경제적입니다.
+- **적절한 계층(Tier) 선택:** 각 Azure 서비스는 다양한 가격 계층을 제공합니다. 개발/테스트 환경이나 초기 MVP 단계에서는 **Free, Basic, Dev/Test** 등 가장 저렴한 계층부터 시작하여, 사용자 증가에 따라 점진적으로 상위 계층으로 업그레이드합니다. 특히 데이터베이스의 **Burst-able 계층**이나 **Serverless 계층**은 비용 관리에 매우 유리합니다.
+- **자동 스케일링 설정:** 트래픽 변동에 따라 리소스가 자동으로 확장/축소되도록 설정하여, 필요한 만큼만 비용을 지불하고 과도한 리소스 낭비를 막습니다.
+- **모니터링 및 최적화:** Azure Monitor를 통해 서비스 사용량과 비용을 지속적으로 모니터링하고, 비효율적인 리소스 사용이 있다면 최적화합니다.
+- **개발/테스트 리소스 관리:** 개발 및 테스트 환경에 사용되는 Azure 리소스는 필요할 때만 켜고, 사용하지 않을 때는 종료하거나 삭제하여 불필요한 비용 발생을 막습니다. (예: VM 사용 시)
+- **데이터 스토리지 비용 관리:** Azure Blob Storage의 경우, 접근 빈도에 따라 **Hot, Cool, Archive** 계층을 선택하여 비용을 최적화할 수 있습니다. 자주 사용되지 않는 오래된 회상 자료 등은 Cool 또는 Archive 계층으로 옮기는 것을 고려할 수 있습니다.
+
+### 🛠️추가 제안
+
+- 환경 분리 및 관리
+    - 개발/테스트/프로덕션용 리소스 그룹과 네이밍 규칙 수립
+    - Azure Policy, 리소스 태깅 전략으로 가시성·비용 관리 강화
+- 백업 및 복구
+    - Azure SQL Database 자동 백업 설정 확인
+    - Blob Storage Lifecycle 관리(Hot→Cool→Archive) 룰 구성
+- 보안·권한
+    - Managed Identity로 서비스 간 인증 통합
+    - Azure AD B2C 도입 검토(고령자 대상 간편 로그인)
+- 비용 모니터링
+    - Cost Alert(월별 예산 초과 알림) 설정
+    - Application Insights · Log Analytics를 활용한 비용·성능 지표 대시보드
+- CI/CD 스테이지 분리
+- GitHub Actions 워크플로우에 dev/prod 브랜치별 파이프라인 구분
+- 배포 전 인프라(ARM/Bicep) 검증 스텝 추가
