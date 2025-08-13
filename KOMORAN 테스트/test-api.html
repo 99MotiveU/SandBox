@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIF 종합 테스트 도구</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        .test-section h3 {
+            color: #555;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .btn-success {
+            background-color: #28a745;
+        }
+        .btn-success:hover {
+            background-color: #218838;
+        }
+        .btn-warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        .btn-warning:hover {
+            background-color: #e0a800;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .api-info {
+            background-color: #e2e3e5;
+            border: 1px solid #d6d8db;
+            color: #383d41;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .status-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #333;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            z-index: 1000;
+        }
+        .main-content {
+            margin-top: 60px;
+        }
+        .token-info {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 12px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .form-group textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="status-bar">
+        <strong>BIF 종합 테스트 도구</strong> | 
+        <span id="connection-status">연결 상태: 확인 중...</span> | 
+        <span id="auth-status">인증 상태: 미로그인</span>
+    </div>
+
+    <div class="main-content">
+        <div class="container">
+            <h1>🧪 BIF 종합 테스트 도구</h1>
+            
+            <div class="api-info">
+                <strong>API 기본 URL:</strong> http://localhost:8080/api<br>
+                <strong>Swagger UI:</strong> <a href="http://localhost:8080/api/swagger-ui.html" target="_blank">http://localhost:8080/api/swagger-ui.html</a><br>
+                <strong>H2 Console:</strong> <a href="http://localhost:8080/api/h2-console" target="_blank">http://localhost:8080/api/h2-console</a>
+            </div>
+
+            <div class="token-info" id="token-info">
+                <strong>JWT 토큰 정보:</strong> 로그인이 필요합니다.
+            </div>
+
+            <div class="grid">
+                <div class="test-section">
+                    <h3>🔐 OAuth2 소셜 로그인</h3>
+                    <button onclick="testOAuthLogin('google')" class="btn-success">Google 로그인</button>
+                    <button onclick="testOAuthLogin('kakao')" class="btn-success">Kakao 로그인</button>
+                    <button onclick="testOAuthLogin('naver')" class="btn-success">Naver 로그인</button>
+                    <button onclick="testJWTToken()" class="btn-warning">JWT 토큰 검증</button>
+                    <button onclick="testLogout()" class="btn-danger">로그아웃</button>
+                    <div id="auth-result" class="result"></div>
+                </div>
+
+                <div class="test-section">
+                    <h3>🧪 실제 회원가입 (기존 API 사용)</h3>
+                    <button onclick="testBifRegistration()" class="btn-success">BIF 회원가입</button>
+                    <button onclick="testGuardianRegistration()" class="btn-success">Guardian 회원가입</button>
+                    <div id="login-result" class="result"></div>
+                </div>
+
+                <div class="test-section">
+                    <h3>👥 회원가입 & 세션</h3>
+                    <button onclick="testSessionInfo()" class="btn-warning">세션 정보 조회</button>
+                    <button onclick="testBifRegistration()" class="btn-success">BIF 회원가입</button>
+                    <button onclick="testGuardianRegistration()" class="btn-success">Guardian 회원가입</button>
+                    <button onclick="testRefreshToken()" class="btn-warning">토큰 갱신</button>
+                    <div id="registration-result" class="result"></div>
+                </div>
+            </div>
+
+            <div class="test-section">
+                <h3>📝 일기 관리 API</h3>
+                <div class="form-group">
+                    <label>일기 내용:</label>
+                    <textarea id="diary-content" placeholder="오늘 하루는 어땠나요?">오늘은 정말 좋은 하루였어요. 친구들과 함께 놀았고, 맛있는 음식도 먹었어요. 내일도 이런 좋은 일들이 있었으면 좋겠어요.</textarea>
+                </div>
+                <div class="form-group">
+                    <label>감정 선택:</label>
+                    <select id="diary-emotion">
+                        <option value="EXCELLENT">최고 (EXCELLENT)</option>
+                        <option value="JOY" selected>기쁨 (JOY)</option>
+                        <option value="NEUTRAL">보통 (NEUTRAL)</option>
+                        <option value="SAD">슬픔 (SAD)</option>
+                        <option value="ANGER">화남 (ANGER)</option>
+                    </select>
+                </div>
+                <button onclick="testCreateDiary()" class="btn-success">일기 생성</button>
+                <button onclick="testGetDiary()" class="btn-warning">일기 조회</button>
+                <button onclick="testUpdateDiary()" class="btn-warning">일기 수정</button>
+                <button onclick="testDeleteDiary()" class="btn-danger">일기 삭제</button>
+                <button onclick="testGetDiaryList()" class="btn-warning">일기 목록</button>
+                <div id="diary-result" class="result"></div>
+            </div>
+
+            <div class="grid">
+                <div class="test-section">
+                    <h3>📊 월간 요약 & 통계</h3>
+                    <div class="form-group">
+                        <label>년도:</label>
+                        <input type="number" id="summary-year" value="2024" min="2020" max="2030">
+                    </div>
+                    <div class="form-group">
+                        <label>월:</label>
+                        <input type="number" id="summary-month" value="1" min="1" max="12">
+                    </div>
+                    <button onclick="testMonthlySummary()" class="btn-success">월간 요약 조회</button>
+                    <button onclick="testStats()" class="btn-success">통계 조회</button>
+                    <div id="summary-result" class="result"></div>
+                </div>
+
+                <div class="test-section">
+                    <h3>🛡️ AI 피드백 & Moderation</h3>
+                    <div class="form-group">
+                        <label>테스트 텍스트:</label>
+                        <textarea id="moderation-content" placeholder="AI 피드백을 받을 텍스트를 입력하세요">이것은 테스트용 텍스트입니다. 부적절한 내용이 없어야 합니다.</textarea>
+                    </div>
+                    <button onclick="testModeration()" class="btn-success">Moderation 테스트</button>
+                    <button onclick="testAiFeedback()" class="btn-success">AI 피드백 테스트</button>
+                    <div id="moderation-result" class="result"></div>
+                </div>
+            </div>
+
+            <div class="test-section">
+                <h3>🚀 전체 테스트</h3>
+                <button onclick="runAllTests()" class="btn-success">전체 테스트 실행</button>
+                <button onclick="clearAllResults()" class="btn-danger">결과 초기화</button>
+                <div id="all-result" class="result"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const BASE_URL = 'http://localhost:8080/api';
+        let currentDiaryId = null;
+        let currentToken = null;
+
+        // 페이지 로드 시 초기화
+        window.onload = function() {
+            checkConnection();
+            updateTokenInfo();
+        };
+
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `result ${type}`;
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusElement = document.getElementById('connection-status');
+            statusElement.textContent = `연결 상태: ${message}`;
+            statusElement.className = type;
+        }
+
+        function updateAuthStatus(message) {
+            document.getElementById('auth-status').textContent = `인증 상태: ${message}`;
+        }
+
+        function updateTokenInfo() {
+            const token = localStorage.getItem('accessToken');
+            const tokenInfo = document.getElementById('token-info');
+            
+            if (token) {
+                try {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    const exp = new Date(payload.exp * 1000);
+                    const now = new Date();
+                    const isExpired = exp < now;
+                    
+                    tokenInfo.innerHTML = `
+                        <strong>JWT 토큰 정보:</strong><br>
+                        역할: ${payload.role || 'N/A'}<br>
+                        닉네임: ${payload.nickname || 'N/A'}<br>
+                        만료시간: ${exp.toLocaleString()}<br>
+                        상태: ${isExpired ? '만료됨' : '유효함'}
+                    `;
+                    tokenInfo.className = isExpired ? 'token-info error' : 'token-info success';
+                    updateAuthStatus(`${payload.role || 'Unknown'} - ${payload.nickname || 'Unknown'}`);
+                } catch (e) {
+                    tokenInfo.innerHTML = '<strong>JWT 토큰 정보:</strong> 토큰 파싱 오류';
+                    tokenInfo.className = 'token-info error';
+                    updateAuthStatus('토큰 오류');
+                }
+            } else {
+                tokenInfo.innerHTML = '<strong>JWT 토큰 정보:</strong> 로그인이 필요합니다.';
+                tokenInfo.className = 'token-info';
+                updateAuthStatus('미로그인');
+            }
+        }
+
+        async function checkConnection() {
+            try {
+                const response = await fetch(`${BASE_URL}/diaries`);
+                if (response.ok) {
+                    updateStatus('연결됨', 'success');
+                } else if (response.status === 401) {
+                    updateStatus('연결됨 (인증 필요)', 'warning');
+                } else {
+                    updateStatus('서버 오류', 'error');
+                }
+            } catch (error) {
+                updateStatus('연결 실패', 'error');
+            }
+        }
+
+        // OAuth2 로그인 테스트
+        async function testOAuthLogin(provider) {
+            try {
+                showResult('auth-result', `🔗 ${provider} OAuth 로그인을 시작합니다...\n\n`, 'info');
+                
+                const oauthUrl = `${BASE_URL}/oauth2/authorization/${provider}`;
+                showResult('auth-result', 
+                    `${provider.toUpperCase()} OAuth 로그인 링크:\n${oauthUrl}\n\n` +
+                    `⚠️ 실제 테스트를 위해서는:\n` +
+                    `1. application-dev.yml에 ${provider} OAuth 클라이언트 ID와 시크릿을 설정해야 합니다.\n` +
+                    `2. 위 링크를 클릭하여 소셜 로그인을 진행하세요.\n` +
+                    `3. 로그인 성공 후 JWT 토큰이 자동으로 저장됩니다.`, 'info');
+                
+                // 새 창에서 OAuth 링크 열기
+                window.open(oauthUrl, '_blank');
+                
+            } catch (error) {
+                showResult('auth-result', `❌ OAuth 로그인 테스트 오류: ${error.message}`, 'error');
+            }
+        }
+
+        async function testJWTToken() {
+            try {
+                const token = localStorage.getItem('accessToken');
+                if (!token) {
+                    showResult('auth-result', '⚠️ 저장된 JWT 토큰이 없습니다. 먼저 회원가입해주세요.', 'error');
+                    return;
+                }
+
+                // 실제 API 호출로 토큰 검증 (일기 목록 조회)
+                const response = await fetch(`${BASE_URL}/diaries`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    showResult('auth-result', `✅ JWT 토큰 검증 성공!\n\n토큰이 유효하며 API 호출이 가능합니다.`, 'success');
+                    updateTokenInfo();
+                } else if (response.status === 401) {
+                    showResult('auth-result', `❌ JWT 토큰이 유효하지 않습니다.\n\n토큰을 다시 발급받아주세요.`, 'error');
+                } else {
+                    const errorText = await response.text();
+                    showResult('auth-result', `❌ API 호출 실패\n\n${errorText}`, 'error');
+                }
+            } catch (error) {
+                showResult('auth-result', `❌ JWT 토큰 검증 오류: ${error.message}`, 'error');
+            }
+        }
+
+        // 실제 회원가입 함수들 (기존 UserController 사용)
+        async function testBifRegistration() {
+            try {
+                const email = prompt('BIF 이메일을 입력하세요 (기본값: test-bif@example.com):', 'test-bif@example.com');
+                const socialId = prompt('소셜 ID를 입력하세요 (기본값: 1):', '1');
+                
+                if (!email || !socialId) return;
+
+                const response = await fetch(`${BASE_URL}/auth/register/bif`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        email: email,
+                        socialId: parseInt(socialId)
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    localStorage.setItem('accessToken', result.data.accessToken);
+                    showResult('registration-result', `✅ BIF 회원가입 성공!\n\n${JSON.stringify(result.data, null, 2)}`, 'success');
+                    updateTokenInfo();
+                } else {
+                    const errorText = await response.text();
+                    showResult('registration-result', `❌ BIF 회원가입 실패\n\n${errorText}`, 'error');
+                }
+            } catch (error) {
+                showResult('registration-result', `❌ BIF 회원가입 오류: ${error.message}`, 'error');
+            }
+        }
+
+        async function testGuardianRegistration() {
+            try {
+                const email = prompt('Guardian 이메일을 입력하세요 (기본값: test-guardian@example.com):', 'test-guardian@example.com');
+                const socialId = prompt('소셜 ID를 입력하세요 (기본값: 2):', '2');
+                const connectionCode = prompt('연결 코드를 입력하세요 (기본값: ABC123):', 'ABC123');
+                
+                if (!email || !socialId || !connectionCode) return;
+
+                const response = await fetch(`${BASE_URL}/auth/register/guardian`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        email: email,
+                        socialId: parseInt(socialId),
+                        connectionCode: connectionCode
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    localStorage.setItem('accessToken', result.data.accessToken);
+                    showResult('registration-result', `✅ Guardian 회원가입 성공!\n\n${JSON.stringify(result.data, null, 2)}`, 'success');
+                    updateTokenInfo();
+                } else {
+                    const errorText = await response.text();
+                    showResult('registration-result', `❌ Guardian 회원가입 실패\n\n${errorText}`, 'error');
+                }
+            } catch (error) {
+                showResult('registration-result', `❌ Guardian 회원가입 오류: ${error.message}`, 'error');
+            }
+        }
+
+        async function testRefreshToken() {
+            try {
+                const refreshToken = getCookie('refreshToken');
+                if (!refreshToken) {
+                    showResult('registration-result', '⚠️ 저장된 리프레시 토큰이 없습니다.', 'error');
+                    return;
+                }
+
+                const response = await fetch(`${BASE_URL}/auth/refresh`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    localStorage.setItem('accessToken', result.data.jwtToken);
+                    showResult('registration-result', `✅ 토큰 갱신 성공!\n\n새로운 액세스 토큰이 저장되었습니다.`, 'success');
+                    updateTokenInfo();
+                } else {
+                    const errorText = await response.text();
+                    showResult('registration-result', `❌ 토큰 갱신 실패\n\n${errorText}`, 'error');
+                }
+            } catch (error) {
+                showResult('registration-result', `❌ 토큰 갱신 오류: ${error.message}`, 'error');
+            }
+        }
+
+        async function testLogout() {
+            try {
+                const response = await fetch(`${BASE_URL}/auth/logout`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    localStorage.removeItem('accessToken');
+                    showResult('auth-result', '✅ 로그아웃 성공!\n\n액세스 토큰이 제거되었습니다.', 'success');
+                    updateTokenInfo();
+                } else {
+                    const errorText = await response.text();
+                    showResult('auth-result', `❌ 로그아웃 실패\n\n${errorText}`, 'error');
+                }
+            } catch (error) {
+                showResult('auth-result', `❌ 로그아웃 오류: ${error.message}`, 'error');
+            }
+        }
+
+        async function testSessionInfo() {
+            try {
+                const response = await fetch(`${BASE_URL}/auth/session-info`);
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    showResult('registration-result', `✅ 세션 정보 조회 성공!\n\n${JSON.stringify(result, null, 2)}`, 'success');
+                } else {
+                    const errorText = await response.text();
+                    showResult('registration-result', `❌ 세션 정보 조회 실패\n\n${errorText}`, 'error');
+                }
+            } catch (error) {
+                showResult('registration-result', `❌ 세션 정보 조회 오류: ${error.message}`, 'error');
+            }
+        }
+
+        async function testBifRegistration() {
+            try {
+                const nickname = prompt('BIF 닉네임을 입력하세요:');
+                if (!nickname) {
+                    showResult('registration-result', '⚠️ 닉네임을 입력해주세요.', 'error');
+                    return;
+                }
+
+                const response = await fetch(`${BASE_URL}/auth/register/bif`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        nickname: nickname
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showResult('registration-result', `✅ BIF 회원가입 성공!\n\n${JSON.stringify(result, null, 2)}`, 'success');
+                } else {
+                    const errorText = await response.text();
+                    showResult('registration-result', `❌ BIF 회원가입 실패\n\n${errorText}`, 'error');
+                }
+            } catch (error) {
+                showResult('registration-result', `❌ BIF 회원가입 오류: ${error.message}`, 'error');
+            }
+        }
+
+        async function testGuardianRegistration() {
+            try {
+                const bifId = prompt('연결할 BIF ID를 입력하세요:');
+                const nickname = prompt('Guardian 닉네임을 입력하세요:');
+                
+                if (!bifId || !nickname) {
+                    showResult('registration-result', '⚠️ BIF ID와 닉네임을 모두 입력해주세요.', 'error');
+                    return;
+                }
+
+                const response = await fetch(`${BASE_URL}/auth/register/guardian`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        bifId: bifId,
+                        nickname: nickname
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showResult('registration-result', `✅ Guardian 회원가입 성공!\n\n${JSON.stringify(result, null, 2)}`, 'success');
+                } else {
+                    const errorText = await response.text();
+                    showResult('registration-result', `❌ Guardian 회원가입 실패\n\n${errorText}`, 'error');
+                }
+            } catch (error) {
+                showResult('registration-result', `❌ Guardian 회원가입 오류: ${error.message}`, 'error');
+            }
+        }
+
+        // 일기 관련 테스트 함수들
+        async function testCreateDiary() {
+            try {
+                const token = localStorage.getItem('accessToken');
+                if (!token) {
+                    showResult('diary-result', '⚠️ 로그인이 필요합니다. 먼저 OAuth 로그인을 진행해주세요.', 'error');
+                    return;
+                }
+
+                const content = document.getElementById('diary-content').value;
+                const emotion = document.getElementById('diary-emotion').value;
+                
+                const diaryData = {
+                    content: content,
+                    emotion: emotion,
+                    date: new Date().toISOString()
+                };
+
+                const response = await fetch(`${BASE_URL}/diaries`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(diaryData)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    currentDiaryId = result.id;
+                    showResult('diary-result', `✅ 일기 생성 성공!\n\n${JSON.stringify(result, null, 2)}`, 'success');
+                } else {
+                    const errorText = await response.text();
+                    showResult('diary-result', `❌ 일기 생성 실패\n\n${errorText}`, 'error');
+                }
+            } catch (error) {
+                showResult('diary-result', `❌ 오류 발생: ${error.message}`, 'error');
+            }
+        }
+
+        async function testGetDiary() {
+            if (!currentDiaryId) {
+                showResult('diary-result', '⚠️ 먼저 일기를 생성해주세요.', 'error');
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('accessToken');
+                if (!token) {
+                    showResult('diary-result', '⚠️ 로그인이 필요합니다.', 'error');
+                    return;
+                }
+
+                const response = await fetch(`${BASE_URL}/diaries/${currentDiaryId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    showResult('diary-result', `✅ 일기 조회 성공!\n\n${JSON.stringify(result, null, 2)}`, 'success');
+                } else {
+                    const errorText = await response.text();
+                    showResult('diary-result', `❌ 일기 조회 실패\n\n${errorText}`, 'error');
+                }
+            } catch (error) {
+                showResult('diary-result', `❌ 오류 발생: ${error.message}`, 'error');
+            }
+        }
+
+        async function testUpdateDiary() {
+            if (!currentDiaryId) {
+                showResult('diary-result', '⚠️ 먼저 일기를 생성해주세요.', 'error');
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('accessToken');
+                if (!token) {
+                    showResult('diary-result', '⚠️ 로그인이 필요합니다.', 'error');
+                    return;
+                }
+
+                const newContent = prompt('수정할 내용을 입력하세요:', '수정된 내용: 오늘은 정말 정말 좋은 하루였어요!');
+                if (!newContent) return;
+
+                const response = await fetch(`${BASE_URL}/diaries/${currentDiaryId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(newContent)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showResult('diary-result', `✅ 일기 수정 성공!\n\n${JSON.stringify(result, null, 2)}`, 'success');
+                } else {
+                    const errorText = await response.text();
+                    showResult('diary-result', `❌ 일기 수정 실패\n\n${errorText}`, 'error');
+                }
+            } catch (error) {
+                showResult('diary-result', `❌ 오류 발생: ${error.message}`, 'error');
+            }
+        }
+
+        async function testDeleteDiary() {
+            if (!currentDiaryId) {
+                showResult('diary-result', '⚠️ 먼저 일기를 생성해주세요.', 'error');
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('accessToken');
+                if (!token) {
+                    showResult('diary-result', '⚠️ 로그인이 필요합니다.', 'error');
+                    return;
+                }
+
+                const response = await fetch(`${BASE_URL}/diaries/${currentDiaryId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    showResult('diary-result', '✅ 일기 삭제 성공!', 'success');
+                    currentDiaryId = null;
+                } else {
+                    const errorText = await response.text();
+                    showResult('diary-result', `❌ 일기 삭제 실패\n\n${errorText}`, 'error');
+                }
+            } catch (error) {
+                showResult('diary-result', `❌ 오류 발생: ${error.message}`, 'error');
+            }
+        }
+
+        async function testGetDiaryList() {
+            try {
+                const response = await fetch(`${BASE_URL}/diaries/test/list`);
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    showResult('diary-result', `✅ 일기 목록 조회 성공!\n\n${JSON.stringify(result, null, 2)}`, 'success');
+                } else {
+                    const errorText = await response.text();
+                    showResult('diary-result', `❌ 일기 목록 조회 실패\n\n${errorText}`, 'error');
+                }
+            } catch (error) {
+                showResult('diary-result', `❌ 오류 발생: ${error.message}`, 'error');
+            }
+        }
+
+        async function testMonthlySummary() {
+            try {
+                const token = localStorage.getItem('accessToken');
+                if (!token) {
+                    showResult('summary-result', '⚠️ 로그인이 필요합니다. 먼저 OAuth 로그인을 진행해주세요.', 'error');
+                    return;
+                }
+
+                const year = document.getElementById('summary-year').value;
+                const month = document.getElementById('summary-month').value;
+                
+                const response = await fetch(`${BASE_URL}/diaries/monthly-summary?year=${year}&month=${month}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    showResult('summary-result', `✅ 월간 요약 조회 성공!\n\n${JSON.stringify(result, null, 2)}`, 'success');
+                } else {
+                    const errorText = await response.text();
+                    showResult('summary-result', `❌ 월간 요약 조회 실패\n\n${errorText}`, 'error');
+                }
+            } catch (error) {
+                showResult('summary-result', `❌ 오류 발생: ${error.message}`, 'error');
+            }
+        }
+
+        async function testStats() {
+            try {
+                const token = localStorage.getItem('accessToken');
+                if (!token) {
+                    showResult('summary-result', '⚠️ 로그인이 필요합니다. 먼저 회원가입을 진행해주세요.', 'error');
+                    return;
+                }
+
+                const response = await fetch(`${BASE_URL}/stats/stat`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    showResult('summary-result', `✅ 통계 조회 성공!\n\n${JSON.stringify(result, null, 2)}`, 'success');
+                } else {
+                    const errorText = await response.text();
+                    showResult('summary-result', `❌ 통계 조회 실패\n\n${errorText}`, 'error');
+                }
+            } catch (error) {
+                showResult('summary-result', `❌ 오류 발생: ${error.message}`, 'error');
+            }
+        }
+
+        async function testModeration() {
+            try {
+                const content = document.getElementById('moderation-content').value;
+                const moderationData = { content: content };
+
+                const response = await fetch(`${BASE_URL}/diaries/test/moderation`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(moderationData)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showResult('moderation-result', `✅ Moderation 테스트 성공!\n\n${JSON.stringify(result, null, 2)}`, 'success');
+                } else {
+                    const errorText = await response.text();
+                    showResult('moderation-result', `❌ Moderation 테스트 실패\n\n${errorText}`, 'error');
+                }
+            } catch (error) {
+                showResult('moderation-result', `❌ 오류 발생: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAiFeedback() {
+            try {
+                const content = document.getElementById('moderation-content').value;
+                const feedbackData = { content: content };
+
+                const response = await fetch(`${BASE_URL}/diaries/test/ai-feedback`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(feedbackData)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showResult('moderation-result', `✅ AI 피드백 테스트 성공!\n\n${JSON.stringify(result, null, 2)}`, 'success');
+                } else {
+                    const errorText = await response.text();
+                    showResult('moderation-result', `❌ AI 피드백 테스트 실패\n\n${errorText}`, 'error');
+                }
+            } catch (error) {
+                showResult('moderation-result', `❌ 오류 발생: ${error.message}`, 'error');
+            }
+        }
+
+        async function runAllTests() {
+            let results = '=== 전체 테스트 시작 ===\n\n';
+            
+            try {
+                // 1. 연결 확인
+                results += '1. 서버 연결 확인...\n';
+                try {
+                    const connectionResponse = await fetch(`${BASE_URL}/diaries/test/list`);
+                    if (connectionResponse.ok) {
+                        results += '✅ 서버 연결 성공\n';
+                    } else {
+                        results += `❌ 서버 연결 실패: ${await connectionResponse.text()}\n`;
+                    }
+                } catch (error) {
+                    results += `❌ 서버 연결 실패: ${error.message}\n`;
+                }
+
+                // 2. 일기 생성
+                results += '\n2. 일기 생성 테스트...\n';
+                const diaryData = {
+                    content: "전체 테스트용 일기입니다.",
+                    emotion: "JOY",
+                    date: new Date().toISOString()
+                };
+                
+                const createResponse = await fetch(`${BASE_URL}/diaries/test`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(diaryData)
+                });
+                
+                if (createResponse.ok) {
+                    const createdDiary = await createResponse.json();
+                    currentDiaryId = createdDiary.id;
+                    results += '✅ 일기 생성 성공\n';
+                } else {
+                    results += `❌ 일기 생성 실패: ${await createResponse.text()}\n`;
+                }
+
+                // 3. 일기 조회
+                results += '\n3. 일기 조회 테스트...\n';
+                if (currentDiaryId) {
+                    const getResponse = await fetch(`${BASE_URL}/diaries/test/${currentDiaryId}`);
+                    if (getResponse.ok) {
+                        results += '✅ 일기 조회 성공\n';
+                    } else {
+                        results += `❌ 일기 조회 실패: ${await getResponse.text()}\n`;
+                    }
+                }
+
+                // 4. 월간 요약
+                results += '\n4. 월간 요약 테스트...\n';
+                const currentDate = new Date();
+                const summaryResponse = await fetch(`${BASE_URL}/diaries/test/monthly-summary?year=${currentDate.getFullYear()}&month=${currentDate.getMonth() + 1}`);
+                if (summaryResponse.ok) {
+                    results += '✅ 월간 요약 성공\n';
+                } else {
+                    results += `❌ 월간 요약 실패: ${await summaryResponse.text()}\n`;
+                }
+
+                // 5. Moderation
+                results += '\n5. Moderation 테스트...\n';
+                const moderationResponse = await fetch(`${BASE_URL}/diaries/test/moderation`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: "테스트 텍스트" })
+                });
+                if (moderationResponse.ok) {
+                    results += '✅ Moderation 성공\n';
+                } else {
+                    results += `❌ Moderation 실패: ${await moderationResponse.text()}\n`;
+                }
+
+                // 6. 일기 삭제
+                results += '\n6. 일기 삭제 테스트...\n';
+                if (currentDiaryId) {
+                    const deleteResponse = await fetch(`${BASE_URL}/diaries/test/${currentDiaryId}`, {
+                        method: 'DELETE'
+                    });
+                    if (deleteResponse.ok) {
+                        results += '✅ 일기 삭제 성공\n';
+                        currentDiaryId = null;
+                    } else {
+                        results += `❌ 일기 삭제 실패: ${await deleteResponse.text()}\n`;
+                    }
+                }
+
+                results += '\n=== 전체 테스트 완료 ===';
+                showResult('all-result', results, 'success');
+
+            } catch (error) {
+                showResult('all-result', `❌ 전체 테스트 중 오류 발생: ${error.message}`, 'error');
+            }
+        }
+
+        function clearAllResults() {
+            const resultElements = document.querySelectorAll('.result');
+            resultElements.forEach(element => {
+                element.textContent = '';
+                element.className = 'result';
+            });
+        }
+
+        // 쿠키 관련 유틸리티 함수
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        // 토큰 정보 주기적 업데이트
+        setInterval(updateTokenInfo, 5000);
+    </script>
+</body>
+</html>
